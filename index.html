@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIDR to IP Range Converter</title>
+</head>
+<body>
+    <h1>CIDR to IP Range Converter<br>for LogRhythm SIEM</h1>
+    <form id="converterForm">
+        <label for="cidrInput">Enter CIDR Notations (one per line):<br>
+	Example: 192.168.1.0/24</label><br>
+        <textarea id="cidrInput" rows="10" cols="100"></textarea><br>
+        <button type="button" onclick="convertCIDR()">Convert</button><br><br><br>	
+	<label for="output">IP Address Ranges (in LogRhythm format):<br>Example: 192.168.1.0~192.168.1.255</label><br></label><br>
+        <textarea id="output" rows="10" cols="100" readonly></textarea>
+    </form>
+
+    <script>
+        // Function to convert CIDR notation to IP address range
+        function convertCIDR(cidr) {
+            const cidrInput = document.getElementById('cidrInput').value.trim().split('\n');
+            const ipRanges = cidrInput.map(convertCIDRtoRange).filter(Boolean); // Filter out empty strings
+            document.getElementById('output').value = ipRanges.join('\n');
+        }
+
+        // Function to convert CIDR notation to IP address range
+        function convertCIDRtoRange(cidr) {
+            if (cidr.startsWith('#')) return ''; // Ignore lines starting with '#'
+            
+            const [ip, subnet] = cidr.split('/');
+            const subnetSize = Math.pow(2, (32 - subnet));
+            const ipBytes = ip.split('.').map(Number);
+            
+            const startNumeric = ipBytes.reduce((acc, byte) => (acc << 8) + byte, 0);
+            const endNumeric = startNumeric + subnetSize - 1;
+            const startIP = longToIP(startNumeric);
+            const endIP = longToIP(endNumeric);
+
+            return `${startIP}~${endIP}`;
+        }
+
+        // Function to convert long integer to IP address string
+        function longToIP(long) {
+            return [
+                (long >>> 24) & 0xFF,
+                (long >>> 16) & 0xFF,
+                (long >>> 8) & 0xFF,
+                long & 0xFF
+            ].join('.');
+        }
+    </script>
+</body>
+</html>
